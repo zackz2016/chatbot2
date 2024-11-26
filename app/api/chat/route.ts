@@ -1,14 +1,27 @@
 import OpenAI from 'openai';
 import { NextResponse } from 'next/server';
 
+// 确保从环境变量获取 API key
 const apiKey = process.env.DEEPSEEK_API_KEY;
+
+if (!apiKey) {
+  throw new Error('Missing DEEPSEEK_API_KEY environment variable');
+}
 
 const client = new OpenAI({
   apiKey,
-  baseURL: 'https://api.deepseek.com'
+  baseURL: 'https://api.deepseek.com',
+  dangerouslyAllowBrowser: false
 });
 
 export async function POST(request: Request) {
+  if (!apiKey) {
+    return NextResponse.json(
+      { error: 'API key not configured' },
+      { status: 500 }
+    );
+  }
+
   try {
     const { messages } = await request.json();
     
