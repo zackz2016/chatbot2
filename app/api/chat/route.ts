@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     const response = await client.chat.completions.create({
       model: "deepseek-chat",
       messages,
-      temperature: 1.3,
+      temperature: 0.7,
       max_tokens: 2000,
     });
 

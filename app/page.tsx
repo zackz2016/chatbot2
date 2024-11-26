@@ -3,71 +3,6 @@
 import { useState } from 'react';
 import { Message, generateAIResponse } from './utils/api';
 
-// 增强的文本格式化函数
-const formatText = (text: string) => {
-  const blocks = text.split('\n\n');
-  
-  return blocks.map((block, blockIndex) => {
-    // 处理代码块
-    if (block.startsWith('```') && block.endsWith('```')) {
-      const code = block.slice(3, -3);
-      const [language, ...codeLines] = code.split('\n');
-      return (
-        <pre key={blockIndex} className="bg-gray-800 text-gray-100 p-4 rounded-lg overflow-x-auto my-2">
-          <code className="block">
-            {codeLines.join('\n')}
-          </code>
-        </pre>
-      );
-    }
-    
-    // 处理列表
-    if (block.split('\n').every(line => line.trim().match(/^[1-9]\.|\-|\*\s/))) {
-      const items = block.split('\n');
-      return (
-        <ul key={blockIndex} className="list-disc pl-6 my-2 space-y-1">
-          {items.map((item, itemIndex) => (
-            <li key={itemIndex}>{item.replace(/^[1-9]\.|\-|\*\s/, '')}</li>
-          ))}
-        </ul>
-      );
-    }
-    
-    // 处理普通段落
-    const lines = block.split('\n');
-    return (
-      <div key={blockIndex} className="my-2">
-        {lines.map((line, lineIndex) => {
-          // 处理标题
-          if (line.startsWith('# ')) {
-            return <h1 key={lineIndex} className="text-xl font-bold mb-2">{line.slice(2)}</h1>;
-          }
-          if (line.startsWith('## ')) {
-            return <h2 key={lineIndex} className="text-lg font-bold mb-2">{line.slice(3)}</h2>;
-          }
-          if (line.startsWith('### ')) {
-            return <h3 key={lineIndex} className="text-base font-bold mb-2">{line.slice(4)}</h3>;
-          }
-          
-          // 处理强调文本
-          const formattedLine = line
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/`(.*?)`/g, '<code>$1</code>');
-          
-          return (
-            <p 
-              key={lineIndex} 
-              className="mb-2 last:mb-0"
-              dangerouslySetInnerHTML={{ __html: formattedLine }}
-            />
-          );
-        })}
-      </div>
-    );
-  });
-};
-
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -79,9 +14,20 @@ export default function Home() {
 
     try {
       setIsLoading(true);
+      // 添加系统提示以规范输出格式
+      const systemMessage: Message = {
+        role: 'system',
+        content: '请使用简单的文字段落回复，如需列举要点请使用数字编号，代码示例请使用三个反引号包裹，避免使用复杂的markdown语法。'
+      };
+      
       const newMessage: Message = { role: 'user', content: input };
-      const newMessages = [...messages, newMessage];
-      setMessages(newMessages);
+      const newMessages = messages.length === 0 
+        ? [systemMessage, newMessage] 
+        : [...messages, newMessage];
+        
+      setMessages(messages.length === 0 
+        ? [newMessage] 
+        : [...messages, newMessage]);
       setInput('');
 
       const aiResponse = await generateAIResponse(newMessages);
@@ -100,17 +46,12 @@ export default function Home() {
     }
   };
 
-  const startNewChat = () => {
-    setMessages([]);
-    setInput('');
-  };
-
   return (
     <main className="flex h-screen bg-gradient-to-b from-gray-50 to-white">
       {/* 侧边栏 */}
       <div className="w-64 bg-white border-r border-gray-100 p-4 hidden md:block">
         <button 
-          onClick={startNewChat}
+          onClick={() => setMessages([])}
           className="w-full bg-white hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-lg border border-gray-200 transition-colors duration-200 flex items-center justify-center gap-2"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -118,14 +59,9 @@ export default function Home() {
           </svg>
           新对话
         </button>
-        
-        {/* 历史对话列表 */}
-        <div className="mt-4 space-y-2">
-          {/* 这里可以添加历史对话列表 */}
-        </div>
       </div>
 
-      {/* 主聊天区域 - 添加居中容器 */}
+      {/* 主聊天区域 */}
       <div className="flex-1 flex justify-center">
         <div className="w-full max-w-[650px] flex flex-col">
           {/* 欢迎信息 */}
@@ -147,10 +83,11 @@ export default function Home() {
                     ? 'bg-blue-500 text-white' 
                     : 'bg-gray-100 text-gray-800'
                 }`}>
-                  {message.role === 'assistant' 
-                    ? formatText(message.content)
-                    : message.content
-                  }
+                  {message.content.split('\n').map((line, i) => (
+                    <div key={i} className="mb-2 last:mb-0">
+                      {line}
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}

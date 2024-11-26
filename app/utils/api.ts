@@ -3,15 +3,6 @@ export type Message = {
   content: string;
 };
 
-// 添加一个简单的格式检测函数
-const isCodeBlock = (text: string): boolean => {
-  return text.startsWith('```') && text.endsWith('```');
-};
-
-const isList = (text: string): boolean => {
-  return text.trim().match(/^[1-9]\.|\-|\*\s/) !== null;
-};
-
 export const generateAIResponse = async (messages: Message[]) => {
   try {
     const response = await fetch('/api/chat', {
