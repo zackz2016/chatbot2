@@ -1,9 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    runtime: 'edge',
+  webpack: (config, { isServer, nextRuntime }) => {
+    if (nextRuntime === 'edge') {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        async_hooks: false,
+        net: false,
+        tls: false,
+        fs: false,
+        perf_hooks: false,
+        child_process: false,
+      };
+    }
+    return config;
   },
-  // 确保 OpenAI 包可以在 Edge Runtime 中使用
   transpilePackages: ['openai'],
 }
 
