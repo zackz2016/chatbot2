@@ -1,20 +1,9 @@
-import OpenAI from 'openai';
-import { NextResponse } from 'next/server';
-
-// 确保从环境变量获取 API key
-const apiKey = process.env.DEEPSEEK_API_KEY;
-
-if (!apiKey) {
-  throw new Error('Missing DEEPSEEK_API_KEY environment variable');
-}
-
-const client = new OpenAI({
-  apiKey,
-  baseURL: 'https://api.deepseek.com',
-  dangerouslyAllowBrowser: false
-});
-
 export const runtime = 'edge';
+
+import { NextResponse } from 'next/server';
+import OpenAI from 'openai';
+
+const apiKey = process.env.DEEPSEEK_API_KEY || process.env.NEXT_PUBLIC_DEEPSEEK_API_KEY;
 
 export async function POST(request: Request) {
   if (!apiKey) {
@@ -25,6 +14,12 @@ export async function POST(request: Request) {
   }
 
   try {
+    const client = new OpenAI({
+      apiKey,
+      baseURL: 'https://api.deepseek.com',
+      dangerouslyAllowBrowser: true
+    });
+
     const { messages } = await request.json();
     
     const response = await client.chat.completions.create({
