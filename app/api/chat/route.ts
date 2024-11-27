@@ -14,6 +14,8 @@ const client = new OpenAI({
   dangerouslyAllowBrowser: false
 });
 
+export const runtime = 'edge';
+
 export async function POST(request: Request) {
   if (!apiKey) {
     return NextResponse.json(
