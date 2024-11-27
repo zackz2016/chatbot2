@@ -1,11 +1,20 @@
-export const runtime = 'edge';
-
-import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { NextResponse } from 'next/server';
+
+// 确保从环境变量获取 API key
+const apiKey = process.env.DEEPSEEK_API_KEY;
+
+if (!apiKey) {
+  throw new Error('Missing DEEPSEEK_API_KEY environment variable');
+}
+
+const client = new OpenAI({
+  apiKey,
+  baseURL: 'https://api.deepseek.com',
+  dangerouslyAllowBrowser: false
+});
 
 export async function POST(request: Request) {
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-
   if (!apiKey) {
     return NextResponse.json(
       { error: 'API key not configured' },
@@ -14,17 +23,6 @@ export async function POST(request: Request) {
   }
 
   try {
-    const client = new OpenAI({
-      apiKey,
-      baseURL: 'https://api.deepseek.com',
-      dangerouslyAllowBrowser: true,
-      defaultHeaders: {
-        'Content-Type': 'application/json',
-      },
-      defaultQuery: undefined,
-      fetch: fetch,
-    });
-
     const { messages } = await request.json();
     
     const response = await client.chat.completions.create({
@@ -35,10 +33,10 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(response.choices[0].message);
-  } catch (error: any) {
+  } catch (error) {
     console.error('AI响应错误:', error);
     return NextResponse.json(
-      { error: error?.message || '处理请求时发生错误' },
+      { error: '处理请求时发生错误' },
       { status: 500 }
     );
   }
